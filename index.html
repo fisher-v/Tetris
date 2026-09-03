@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>俄罗斯方块</title>
+    <link rel="stylesheet" href="src/styles.css" />
+  </head>
+  <body>
+    <main class="game-shell" aria-label="俄罗斯方块游戏">
+      <section class="handheld" aria-label="游戏机">
+        <div class="brand-row">
+          <span class="brand-light" aria-hidden="true"></span>
+          <span class="brand-name">TETRIS POCKET</span>
+        </div>
+
+        <div class="screen-frame">
+          <div class="screen">
+            <div class="board-panel">
+              <canvas id="board" width="360" height="600" aria-label="俄罗斯方块棋盘"></canvas>
+              <div id="overlay" class="overlay">
+                <div id="overlayTitle" class="overlay-title">俄罗斯方块</div>
+                <button id="overlayButton" class="primary-button" type="button">开始游戏</button>
+              </div>
+            </div>
+
+            <aside class="side-panel" aria-label="游戏信息">
+              <div class="stat">
+                <span>分数</span>
+                <strong id="score">0</strong>
+              </div>
+              <div class="stat">
+                <span>最高分</span>
+                <strong id="bestScore">0</strong>
+              </div>
+              <div class="stat">
+                <span>状态</span>
+                <strong id="statusText">待开始</strong>
+              </div>
+              <div class="next-box">
+                <span>下一个</span>
+                <canvas id="next" width="112" height="112" aria-label="下一个方块预览"></canvas>
+              </div>
+              <div class="desktop-actions">
+                <button id="pauseButton" class="secondary-button" type="button">暂停</button>
+                <button id="restartButton" class="secondary-button" type="button">重新开始</button>
+              </div>
+              <p class="help-text">W 上 / A 左 / S 加速 / D 右 / 空格速降 / 回车变形 / P 或 Esc 暂停 / R 重开</p>
+            </aside>
+          </div>
+        </div>
+
+        <div class="mobile-controls" aria-label="手机操作区">
+          <div class="dpad" aria-label="方向键">
+            <button class="control key-w" data-action="up" type="button" aria-label="W 上，无功能">W</button>
+            <button class="control key-a" data-action="left" type="button" aria-label="A 左移">A</button>
+            <button class="control key-s" data-action="down" type="button" aria-label="S 加速下落">S</button>
+            <button class="control key-d" data-action="right" type="button" aria-label="D 右移">D</button>
+          </div>
+          <div class="action-pad" aria-label="操作键">
+            <button class="round-control rotate-control" data-action="rotate" type="button">变形</button>
+            <button class="round-control hard-control" data-action="hardDrop" type="button">速降</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="src/tetris.js"></script>
+    <script src="src/app.js"></script>
+  </body>
+</html>
