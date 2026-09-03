@@ -233,7 +233,7 @@ button {
 
   .handheld {
     display: grid;
-    grid-template-rows: auto minmax(0, 1fr) minmax(210px, 31dvh);
+    grid-template-rows: auto minmax(0, 1fr) clamp(190px, 30dvh, 250px);
     width: min(100%, 430px);
     min-height: calc(100dvh - 20px);
     max-height: calc(100dvh - 20px);
@@ -254,17 +254,18 @@ button {
 
   .screen {
     height: 100%;
-    grid-template-columns: minmax(168px, 1fr) minmax(96px, 118px);
+    grid-template-columns: minmax(0, 1fr) clamp(86px, 25vw, 112px);
     gap: 10px;
     padding: 10px;
     overflow: hidden;
   }
 
   .board-panel {
-    width: auto;
-    height: 100%;
+    width: 100%;
+    height: auto;
     max-height: 100%;
     justify-self: center;
+    align-self: center;
   }
 
   .side-panel {
@@ -305,6 +306,7 @@ button {
   }
 
   .help-text {
+    display: none;
     line-height: 1.35;
   }
 
@@ -314,25 +316,27 @@ button {
 
   .mobile-controls {
     display: grid;
-    grid-template-columns: minmax(156px, 1fr) minmax(132px, 0.9fr);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     align-items: center;
-    gap: 18px;
-    padding: 18px 8px 6px;
+    column-gap: clamp(30px, 9vw, 56px);
+    width: min(100%, 390px);
+    margin: 0 auto;
+    padding: clamp(12px, 2.8dvh, 20px) clamp(10px, 4vw, 18px) 8px;
     min-height: 0;
     touch-action: none;
   }
 
   .dpad {
     position: relative;
-    width: min(44vw, 190px);
+    width: clamp(124px, 38vw, 166px);
     aspect-ratio: 1;
-    justify-self: start;
+    justify-self: center;
   }
 
   .control {
     position: absolute;
-    width: 35%;
-    height: 35%;
+    width: 34%;
+    height: 34%;
     border: 0;
     border-radius: 8px;
     background: linear-gradient(145deg, #343b45, var(--button));
@@ -342,53 +346,53 @@ button {
   }
 
   .key-w {
-    left: 32.5%;
+    left: 33%;
     top: 0;
   }
 
   .key-a {
     left: 0;
-    top: 32.5%;
+    top: 33%;
   }
 
   .key-s {
-    left: 32.5%;
+    left: 33%;
     bottom: 0;
   }
 
   .key-d {
     right: 0;
-    top: 32.5%;
+    top: 33%;
   }
 
   .action-pad {
     position: relative;
-    width: min(39vw, 170px);
-    aspect-ratio: 1.18;
-    justify-self: end;
+    width: clamp(118px, 34vw, 154px);
+    aspect-ratio: 1.3;
+    justify-self: center;
   }
 
   .round-control {
     position: absolute;
-    width: 74px;
-    height: 74px;
+    width: clamp(56px, 16vw, 70px);
+    height: clamp(56px, 16vw, 70px);
     border: 0;
     border-radius: 50%;
     background: linear-gradient(145deg, #d95a6b, #a82745);
     color: #fff7ec;
-    font-size: 15px;
+    font-size: clamp(13px, 3.7vw, 15px);
     font-weight: 900;
     box-shadow: 0 7px 0 #641426, 0 11px 18px rgba(0, 0, 0, 0.26);
   }
 
   .rotate-control {
-    left: 2px;
-    bottom: 10px;
+    left: 0;
+    bottom: 8px;
   }
 
   .hard-control {
-    right: 2px;
-    top: 10px;
+    right: 0;
+    top: 8px;
   }
 }
 
@@ -398,7 +402,7 @@ button {
   }
 
   .screen {
-    grid-template-columns: minmax(144px, 1fr) 92px;
+    grid-template-columns: minmax(0, 1fr) 84px;
     gap: 8px;
     padding: 8px;
   }
@@ -408,13 +412,22 @@ button {
   }
 
   .mobile-controls {
-    gap: 8px;
+    column-gap: 24px;
+    width: min(100%, 340px);
     padding-top: 14px;
   }
 
+  .dpad {
+    width: clamp(112px, 36vw, 132px);
+  }
+
+  .action-pad {
+    width: clamp(106px, 32vw, 126px);
+  }
+
   .round-control {
-    width: 64px;
-    height: 64px;
+    width: clamp(52px, 16vw, 60px);
+    height: clamp(52px, 16vw, 60px);
     font-size: 13px;
   }
 }
@@ -428,20 +441,110 @@ button {
 @media (orientation: landscape) and (max-width: 920px) {
   html,
   body {
-    overflow: auto;
+    overflow: hidden;
   }
 
   .game-shell {
-    align-items: center;
+    align-items: stretch;
+    padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
   }
 
   .handheld {
-    max-height: none;
+    display: grid;
+    grid-template-columns: minmax(96px, 0.72fr) minmax(320px, 400px) minmax(96px, 0.72fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 10px 14px;
+    width: min(100%, 900px);
+    min-height: calc(100dvh - 16px);
+    max-height: calc(100dvh - 16px);
+    padding: 10px 14px 12px;
+    border-radius: 18px 18px 44px 18px;
+  }
+
+  .brand-row {
+    grid-column: 1 / -1;
+    padding: 0 6px;
+  }
+
+  .screen-frame {
+    grid-column: 2;
+    grid-row: 2;
     min-height: 0;
-    grid-template-rows: auto auto auto;
+    height: 100%;
+    padding: 10px;
+  }
+
+  .screen {
+    height: 100%;
+    grid-template-columns: minmax(0, min(28vw, calc((100dvh - 88px) * 0.6))) clamp(78px, 13vw, 104px);
+    align-items: center;
+    justify-content: center;
+  }
+
+  .board-panel {
+    width: 100%;
+    height: auto;
+    max-width: 100%;
+  }
+
+  .side-panel {
+    gap: 4px;
+  }
+
+  .stat,
+  .next-box {
+    padding: 4px;
+    gap: 3px;
+  }
+
+  .stat span,
+  .next-box span {
+    font-size: 10px;
+  }
+
+  .stat strong {
+    font-size: 15px;
+  }
+
+  #next {
+    width: 58px;
+  }
+
+  .desktop-actions {
+    gap: 5px;
+  }
+
+  .secondary-button {
+    min-height: 26px;
+    font-size: 12px;
+  }
+
+  .help-text {
+    display: none;
   }
 
   .mobile-controls {
-    min-height: 190px;
+    display: contents;
+  }
+
+  .dpad {
+    grid-column: 1;
+    grid-row: 2;
+    width: clamp(104px, 16vw, 126px);
+    align-self: center;
+    justify-self: center;
+  }
+
+  .action-pad {
+    grid-column: 3;
+    grid-row: 2;
+    width: clamp(112px, 16vw, 130px);
+    align-self: center;
+    justify-self: center;
+  }
+
+  .round-control {
+    width: clamp(50px, 7.8vw, 58px);
+    height: clamp(50px, 7.8vw, 58px);
   }
 }
