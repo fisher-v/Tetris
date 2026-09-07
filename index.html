@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>俄罗斯方块</title>
-    <link rel="stylesheet" href="src/styles.css?v=20260904-gameboy-controls" />
+    <link rel="stylesheet" href="src/styles.css?v=20260908-key-bindings" />
   </head>
   <body>
     <main class="game-shell" aria-label="俄罗斯方块游戏">
@@ -48,8 +48,9 @@
               <div class="desktop-actions">
                 <button id="pauseButton" class="secondary-button" type="button">暂停</button>
                 <button id="restartButton" class="secondary-button" type="button">重新开始</button>
+                <button id="keySettingsButton" class="secondary-button" type="button">自定义按键</button>
               </div>
-              <p class="help-text">W 上 / A 左 / S 加速 / D 右 / 空格速降 / 回车变形 / P 或 Esc 暂停 / R 重开<br />同时消去 1/2/3/4 行，获得 1×/2×/3×/4×倍率</p>
+              <p id="helpText" class="help-text"></p>
             </aside>
           </div>
         </div>
@@ -67,6 +68,34 @@
           </div>
         </div>
       </section>
+
+      <div id="keySettings" class="key-settings hidden" role="dialog" aria-modal="true" aria-labelledby="keySettingsTitle">
+        <section class="key-settings-panel">
+          <div class="key-settings-header">
+            <div>
+              <h2 id="keySettingsTitle">自定义按键</h2>
+              <p>点击右侧按键项，再按下要绑定的键。每个键只能绑定一个功能。</p>
+            </div>
+            <button id="closeKeySettingsButton" class="close-button" type="button" aria-label="关闭自定义按键">×</button>
+          </div>
+
+          <div class="key-binding-list">
+            <div class="key-binding-row"><span>左移</span><button class="key-binding" data-key-binding="left" type="button"></button></div>
+            <div class="key-binding-row"><span>右移</span><button class="key-binding" data-key-binding="right" type="button"></button></div>
+            <div class="key-binding-row"><span>加速下落</span><button class="key-binding" data-key-binding="down" type="button"></button></div>
+            <div class="key-binding-row"><span>变形</span><button class="key-binding" data-key-binding="rotate" type="button"></button></div>
+            <div class="key-binding-row"><span>速降</span><button class="key-binding" data-key-binding="hardDrop" type="button"></button></div>
+            <div class="key-binding-row"><span>暂停 / 继续</span><button class="key-binding" data-key-binding="pause" type="button"></button></div>
+            <div class="key-binding-row"><span>重新开始</span><button class="key-binding" data-key-binding="restart" type="button"></button></div>
+          </div>
+
+          <p id="keyBindingStatus" class="key-binding-status" role="status" aria-live="polite"></p>
+          <div class="key-settings-actions">
+            <button id="resetKeyBindingsButton" class="secondary-button" type="button">恢复默认</button>
+            <button id="closeKeySettingsButtonBottom" class="primary-button" type="button">完成</button>
+          </div>
+        </section>
+      </div>
     </main>
 
     <script src="src/tetris.js?v=20260908-line-multiplier"></script>

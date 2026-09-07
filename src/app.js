@@ -15,6 +15,45 @@
   var overlayButton = document.getElementById("overlayButton");
   var pauseButton = document.getElementById("pauseButton");
   var restartButton = document.getElementById("restartButton");
+  var keySettingsButton = document.getElementById("keySettingsButton");
+  var keySettingsEl = document.getElementById("keySettings");
+  var closeKeySettingsButton = document.getElementById("closeKeySettingsButton");
+  var closeKeySettingsButtonBottom = document.getElementById("closeKeySettingsButtonBottom");
+  var resetKeyBindingsButton = document.getElementById("resetKeyBindingsButton");
+  var keyBindingStatusEl = document.getElementById("keyBindingStatus");
+  var helpTextEl = document.getElementById("helpText");
+
+  var KEY_BINDINGS_STORAGE_KEY = "tetris-pocket-key-bindings";
+  var DEFAULT_KEY_BINDINGS = {
+    left: ["a", "ArrowLeft"],
+    right: ["d", "ArrowRight"],
+    down: ["s", "ArrowDown"],
+    rotate: ["Enter"],
+    hardDrop: [" "],
+    pause: ["p", "Escape"],
+    restart: ["r"]
+  };
+  var ACTION_LABELS = {
+    left: "左移",
+    right: "右移",
+    down: "加速下落",
+    rotate: "变形",
+    hardDrop: "速降",
+    pause: "暂停 / 继续",
+    restart: "重新开始"
+  };
+  var KEY_LABELS = {
+    " ": "空格",
+    Enter: "Enter",
+    Escape: "Esc",
+    ArrowLeft: "←",
+    ArrowRight: "→",
+    ArrowDown: "↓",
+    ArrowUp: "↑",
+    Backspace: "退格",
+    Tab: "Tab"
+  };
+  var NON_BINDABLE_KEYS = ["Shift", "Control", "Alt", "Meta", "CapsLock", "Tab"];
 
   var game = Tetris.createGame();
   var dropInterval = 820;
@@ -23,6 +62,8 @@
   var dropAccumulator = 0;
   var heldActions = Object.create(null);
   var repeatTimers = Object.create(null);
+  var keyBindings = loadKeyBindings();
+  var editingBinding = "";
 
   function statusLabel(status) {
     if (status === "playing") return "进行中";
@@ -31,6 +72,131 @@
     return "待开始";
   }
 
+  function cloneKeyBindings(source) {
+    var clone = {};
+    Object.keys(DEFAULT_KEY_BINDINGS).forEach(function (action) {
+      clone[action] = source[action].slice();
+    });
+    return clone;
+  }
+
+  function normalizeKey(key) {
+    return key && key.length === 1 ? key.toLowerCase() : key;
+  }
+
+  function loadKeyBindings() {
+    var bindings = cloneKeyBindings(DEFAULT_KEY_BINDINGS);
+    try {
+      var saved = JSON.parse(window.localStorage.getItem(KEY_BINDINGS_STORAGE_KEY) || "null");
+      Object.keys(DEFAULT_KEY_BINDINGS).forEach(function (action) {
+        if (saved && Array.isArray(saved[action])) {
+          var validKeys = saved[action].map(normalizeKey).filter(Boolean);
+          if (validKeys.length) {
+            bindings[action] = validKeys;
+          }
+        }
+      });
+    } catch (error) {
+      // 使用默认按键，兼容禁用 localStorage 的浏览器环境。
+    }
+    return bindings;
+  }
+
+  function saveKeyBindings() {
+    try {
+      window.localStorage.setItem(KEY_BINDINGS_STORAGE_KEY, JSON.stringify(keyBindings));
+    } catch (error) {
+      // 按键仍可在本次游戏中使用，只是不持久化。
+    }
+  }
+
+  function keyLabel(key) {
+    if (KEY_LABELS[key]) return KEY_LABELS[key];
+    return key.length === 1 ? key.toUpperCase() : key;
+  }
+
+  function bindingLabel(action) {
+    return keyBindings[action].map(keyLabel).join(" / ");
+  }
+
+  function isKeyBound(action, key) {
+    var normalizedKey = normalizeKey(key);
+    return keyBindings[action].some(function (boundKey) {
+      return boundKey === normalizedKey;
+    });
+  }
+
+  function updateHelpText() {
+    helpTextEl.textContent = "左移 " + bindingLabel("left") + " · 右移 " + bindingLabel("right") +
+      " · 加速 " + bindingLabel("down") + " · 变形 " + bindingLabel("rotate") +
+      " · 速降 " + bindingLabel("hardDrop") + " · 暂停 " + bindingLabel("pause") +
+      " · 重开 " + bindingLabel("restart") + "；同时消去 1/2/3/4 行，获得 1×/2×/3×/4×倍率";
+  }
+
+  function renderKeyBindings() {
+    document.querySelectorAll("[data-key-binding]").forEach(function (button) {
+      var action = button.getAttribute("data-key-binding");
+      var editing = editingBinding === action;
+      button.textContent = editing ? "请按键…" : bindingLabel(action);
+      button.classList.toggle("listening", editing);
+      button.setAttribute("aria-label", ACTION_LABELS[action] + "：" + (editing ? "等待按键" : bindingLabel(action)));
+    });
+    updateHelpText();
+  }
+
+  function beginKeyBinding(action) {
+    if (!ACTION_LABELS[action]) return;
+    editingBinding = action;
+    keyBindingStatusEl.textContent = "正在设置“" + ACTION_LABELS[action] + "”，请按下新按键（Esc 取消）";
+    renderKeyBindings();
+  }
+
+  function captureKeyBinding(event) {
+    event.preventDefault();
+    if (event.key === "Escape") {
+      editingBinding = "";
+      keyBindingStatusEl.textContent = "已取消设置";
+      renderKeyBindings();
+      return;
+    }
+
+    var key = normalizeKey(event.key);
+    if (!key || key === "Unidentified" || NON_BINDABLE_KEYS.indexOf(key) !== -1) {
+      keyBindingStatusEl.textContent = "这个按键不能单独绑定，请换一个键";
+      return;
+    }
+
+    var conflict = Object.keys(keyBindings).find(function (action) {
+      return action !== editingBinding && isKeyBound(action, key);
+    });
+    if (conflict) {
+      keyBindingStatusEl.textContent = "“" + keyLabel(key) + "”已绑定给“" + ACTION_LABELS[conflict] + "”";
+      return;
+    }
+
+    var action = editingBinding;
+    keyBindings[action] = [key];
+    saveKeyBindings();
+    editingBinding = "";
+    keyBindingStatusEl.textContent = ACTION_LABELS[action] + "已设置为“" + keyLabel(key) + "”";
+    renderKeyBindings();
+  }
+
+  function openKeySettings() {
+    Tetris.pause(game);
+    clearAllRepeats();
+    keySettingsEl.classList.remove("hidden");
+    keyBindingStatusEl.textContent = "";
+    renderKeyBindings();
+    render();
+  }
+
+  function closeKeySettings() {
+    editingBinding = "";
+    keySettingsEl.classList.add("hidden");
+    keyBindingStatusEl.textContent = "";
+    renderKeyBindings();
+  }
   function drawCell(ctx, x, y, size, color, inset) {
     var gap = inset || 1;
     var left = x * size + gap;
@@ -198,29 +364,38 @@
   }
 
   function keyboardAction(event) {
-    var key = event.key;
-    if (key === "a" || key === "A" || key === "ArrowLeft") return "left";
-    if (key === "d" || key === "D" || key === "ArrowRight") return "right";
-    if (key === "s" || key === "S" || key === "ArrowDown") return "down";
-    if (key === "w" || key === "W" || key === "ArrowUp") return "up";
-    if (key === " ") return "hardDrop";
-    if (key === "Enter") return "rotate";
+    if (isKeyBound("left", event.key)) return "left";
+    if (isKeyBound("right", event.key)) return "right";
+    if (isKeyBound("down", event.key)) return "down";
+    if (isKeyBound("rotate", event.key)) return "rotate";
+    if (isKeyBound("hardDrop", event.key)) return "hardDrop";
     return "";
   }
 
   function shouldPreventKey(event) {
     return Boolean(keyboardAction(event)) ||
-      event.key === "p" || event.key === "P" ||
-      event.key === "r" || event.key === "R" ||
-      event.key === "Escape";
+      isKeyBound("pause", event.key) ||
+      isKeyBound("restart", event.key);
   }
 
   function handleKeyDown(event) {
+    if (editingBinding) {
+      captureKeyBinding(event);
+      return;
+    }
+    if (!keySettingsEl.classList.contains("hidden")) {
+      if (event.key === "Escape") {
+        closeKeySettings();
+      } else {
+        event.preventDefault();
+      }
+      return;
+    }
     if (shouldPreventKey(event)) {
       event.preventDefault();
     }
 
-    if (event.key === "p" || event.key === "P" || event.key === "Escape") {
+    if (isKeyBound("pause", event.key)) {
       if (!event.repeat) {
         Tetris.togglePause(game);
         clearAllRepeats();
@@ -228,7 +403,7 @@
       }
       return;
     }
-    if (event.key === "r" || event.key === "R") {
+    if (isKeyBound("restart", event.key)) {
       if (!event.repeat) {
         Tetris.restart(game);
         clearAllRepeats();
@@ -240,7 +415,6 @@
 
     var action = keyboardAction(event);
     if (!action) return;
-    if (action === "up") return;
     if (game.status === "ready") {
       Tetris.start(game);
     }
@@ -250,6 +424,7 @@
   }
 
   function handleKeyUp(event) {
+    if (!keySettingsEl.classList.contains("hidden")) return;
     var action = keyboardAction(event);
     if (action) {
       event.preventDefault();
@@ -333,6 +508,27 @@
     render();
   });
 
+  keySettingsButton.addEventListener("click", openKeySettings);
+  closeKeySettingsButton.addEventListener("click", closeKeySettings);
+  closeKeySettingsButtonBottom.addEventListener("click", closeKeySettings);
+  keySettingsEl.addEventListener("click", function (event) {
+    if (event.target === keySettingsEl) {
+      closeKeySettings();
+    }
+  });
+  resetKeyBindingsButton.addEventListener("click", function () {
+    keyBindings = cloneKeyBindings(DEFAULT_KEY_BINDINGS);
+    saveKeyBindings();
+    editingBinding = "";
+    keyBindingStatusEl.textContent = "已恢复默认按键";
+    renderKeyBindings();
+  });
+  document.querySelectorAll("[data-key-binding]").forEach(function (button) {
+    button.addEventListener("click", function () {
+      beginKeyBinding(button.getAttribute("data-key-binding"));
+    });
+  });
+
   window.addEventListener("keydown", handleKeyDown, { passive: false });
   window.addEventListener("keyup", handleKeyUp, { passive: false });
   window.addEventListener("blur", function () {
@@ -349,6 +545,7 @@
   });
 
   bindButtons();
+  renderKeyBindings();
   render();
   window.requestAnimationFrame(gameLoop);
 })();
