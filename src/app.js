@@ -8,6 +8,7 @@
   var nextContext = nextCanvas.getContext("2d");
   var scoreEl = document.getElementById("score");
   var bestScoreEl = document.getElementById("bestScore");
+  var multiplierEl = document.getElementById("multiplier");
   var statusTextEl = document.getElementById("statusText");
   var overlay = document.getElementById("overlay");
   var overlayTitle = document.getElementById("overlayTitle");
@@ -137,6 +138,7 @@
     drawNext();
     scoreEl.textContent = String(game.score);
     bestScoreEl.textContent = String(game.bestScore);
+    multiplierEl.textContent = "×" + String(game.lastMultiplier);
     statusTextEl.textContent = statusLabel(game.status);
     pauseButton.textContent = game.status === "paused" ? "继续" : "暂停";
     updateOverlay();

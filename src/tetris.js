@@ -55,7 +55,12 @@
   };
 
   var SCORE_BY_LINES = [0, 100, 300, 500, 800];
+  var LINE_CLEAR_MULTIPLIERS = [0, 1, 2, 3, 4];
   var BAG_TYPES = Object.keys(SHAPES);
+
+  function getLineClearMultiplier(cleared) {
+    return LINE_CLEAR_MULTIPLIERS[cleared] || 1;
+  }
 
   function createBoard() {
     return Array.from({ length: ROWS }, function () {
@@ -183,7 +188,8 @@
       score: 0,
       bestScore: loadBestScore(),
       status: "ready",
-      lastCleared: 0
+      lastCleared: 0,
+      lastMultiplier: 1
     };
 
     game.current = makePiece(drawType(game));
@@ -210,6 +216,7 @@
     game.bestScore = bestScore;
     game.status = "playing";
     game.lastCleared = 0;
+    game.lastMultiplier = 1;
   }
 
   function start(game) {
@@ -257,7 +264,8 @@
     var cleared = clearLines(game.board);
     game.lastCleared = cleared;
     if (cleared > 0) {
-      game.score += SCORE_BY_LINES[cleared] || 0;
+      game.lastMultiplier = getLineClearMultiplier(cleared);
+      game.score += (SCORE_BY_LINES[cleared] || 0) * game.lastMultiplier;
       updateBest(game);
     }
     spawnNext(game);
