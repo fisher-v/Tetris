@@ -92,6 +92,7 @@ button {
 .screen {
   display: grid;
   grid-template-columns: minmax(288px, 360px) 220px;
+  grid-template-rows: auto auto;
   gap: 18px;
   align-items: start;
   justify-content: center;
@@ -106,6 +107,8 @@ button {
   position: relative;
   width: min(100%, 360px);
   aspect-ratio: 3 / 5;
+  grid-column: 1;
+  grid-row: 1 / span 2;
 }
 
 #board {
@@ -141,6 +144,8 @@ button {
 }
 
 .side-panel {
+  grid-column: 2;
+  grid-row: 1;
   display: grid;
   gap: 12px;
   min-width: 0;
@@ -178,9 +183,12 @@ button {
 }
 
 .desktop-actions {
+  grid-column: 2;
+  grid-row: 2;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
+  align-self: end;
 }
 .key-settings {
   position: fixed;
@@ -297,6 +305,15 @@ button {
   background: var(--blue);
 }
 
+.auto-button.auto-active {
+  background: var(--accent);
+}
+
+button:disabled {
+  cursor: default;
+  opacity: 0.48;
+}
+
 .primary-button:active,
 .secondary-button:active,
 .control:active,
@@ -355,12 +372,15 @@ button {
   .screen {
     height: 100%;
     grid-template-columns: minmax(0, 1fr) clamp(86px, 25vw, 112px);
+    grid-template-rows: minmax(0, 1fr) auto;
     gap: 10px;
     padding: 10px;
     overflow: hidden;
   }
 
   .board-panel {
+    grid-column: 1;
+    grid-row: 1;
     width: 100%;
     height: auto;
     max-height: 100%;
@@ -369,6 +389,8 @@ button {
   }
 
   .side-panel {
+    grid-column: 2;
+    grid-row: 1;
     align-content: start;
     gap: 8px;
   }
@@ -396,12 +418,23 @@ button {
   }
 
   .desktop-actions {
-    grid-template-columns: 1fr;
+    grid-column: 1 / -1;
+    grid-row: 2;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 7px;
+    width: 100%;
+  }
+
+  #keySettingsButton {
+    display: none !important;
   }
 
   .secondary-button {
     min-height: 34px;
+    min-width: 0;
+    width: 100%;
+    padding: 0 4px;
+    white-space: nowrap;
     font-size: 13px;
   }
 
@@ -509,6 +542,57 @@ button {
   }
 }
 
+@media (max-width: 760px) and (max-height: 720px) {
+  .handheld {
+    grid-template-rows: auto minmax(0, 1fr) clamp(160px, 28dvh, 190px);
+  }
+
+  .side-panel {
+    height: 100%;
+    min-height: 0;
+    gap: 6px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+
+  .stat,
+  .next-box {
+    padding: 5px;
+    gap: 2px;
+  }
+
+  .stat span,
+  .next-box span {
+    white-space: nowrap;
+    font-size: 10px;
+  }
+
+  .stat strong {
+    font-size: 16px;
+  }
+
+  #next {
+    width: 64px;
+  }
+
+  .desktop-actions {
+    gap: 5px;
+  }
+
+  .secondary-button {
+    min-height: 30px;
+    font-size: 12px;
+  }
+}
+
+/* Some phones expose a wider CSS viewport in landscape mode. */
+@media (pointer: coarse) and (max-width: 920px) {
+  #keySettingsButton {
+    display: none !important;
+  }
+}
+
 @media (max-width: 370px) {
   .handheld {
     padding: 10px;
@@ -590,11 +674,14 @@ button {
   .screen {
     height: 100%;
     grid-template-columns: minmax(0, min(28vw, calc((100dvh - 88px) * 0.6))) clamp(78px, 13vw, 104px);
+    grid-template-rows: auto auto;
     align-items: center;
     justify-content: center;
   }
 
   .board-panel {
+    grid-column: 1;
+    grid-row: 1;
     width: 100%;
     height: auto;
     max-width: 100%;
@@ -624,7 +711,15 @@ button {
   }
 
   .desktop-actions {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 5px;
+    width: 100%;
+  }
+
+  #keySettingsButton {
+    display: none !important;
   }
 
   .secondary-button {

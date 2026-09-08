@@ -2,6 +2,7 @@
   "use strict";
 
   var Tetris = window.TetrisCore;
+  var AutoAI = window.TetrisAutoAI.create(Tetris);
   var boardCanvas = document.getElementById("board");
   var boardContext = boardCanvas.getContext("2d");
   var nextCanvas = document.getElementById("next");
@@ -15,6 +16,7 @@
   var overlayButton = document.getElementById("overlayButton");
   var pauseButton = document.getElementById("pauseButton");
   var restartButton = document.getElementById("restartButton");
+  var autoButton = document.getElementById("autoButton");
   var keySettingsButton = document.getElementById("keySettingsButton");
   var keySettingsEl = document.getElementById("keySettings");
   var closeKeySettingsButton = document.getElementById("closeKeySettingsButton");
@@ -60,10 +62,17 @@
   var softDropInterval = dropInterval / 4;
   var lastTime = 0;
   var dropAccumulator = 0;
+  var autoAccumulator = 0;
   var heldActions = Object.create(null);
   var repeatTimers = Object.create(null);
   var keyBindings = loadKeyBindings();
   var editingBinding = "";
+  var autoMode = false;
+  var autoStrategyMode = "Build";
+  var autoPlan = null;
+  var AUTO_SPEED_MULTIPLIER = 3;
+  var AUTO_ACTIONS_PER_PIECE = 6;
+  var AUTO_ACTION_INTERVAL = dropInterval / AUTO_SPEED_MULTIPLIER / AUTO_ACTIONS_PER_PIECE;
 
   function statusLabel(status) {
     if (status === "playing") return "进行中";
@@ -287,6 +296,17 @@
 
   function updateOverlay() {
     overlay.classList.toggle("hidden", game.status === "playing");
+    if (autoMode && game.status === "gameover") {
+      overlay.classList.remove("hidden");
+      overlayTitle.textContent = "自动游戏结束 · " + game.score + " 分";
+      overlayButton.textContent = "自动再来一局";
+      return;
+    }
+    if (autoMode && game.status === "paused") {
+      overlayTitle.textContent = "自动游戏已暂停";
+      overlayButton.textContent = "退出自动模式";
+      return;
+    }
     if (game.status === "ready") {
       overlayTitle.textContent = "俄罗斯方块";
       overlayButton.textContent = "开始游戏";
@@ -305,12 +325,17 @@
     scoreEl.textContent = String(game.score);
     bestScoreEl.textContent = String(game.bestScore);
     multiplierEl.textContent = "×" + String(game.lastMultiplier);
-    statusTextEl.textContent = statusLabel(game.status);
-    pauseButton.textContent = game.status === "paused" ? "继续" : "暂停";
+    statusTextEl.textContent = autoMode ?
+      (game.status === "gameover" ? "自动结束" : game.status === "paused" ? "自动暂停" :
+        "自动 ×3 · " + (autoStrategyMode === "Dig" ? "抢险" : "蓄分")) :
+      statusLabel(game.status);
+    pauseButton.textContent = autoMode ? "自动中" : game.status === "paused" ? "继续" : "暂停";
+    updateAutoControlState();
     updateOverlay();
   }
 
   function playAction(action) {
+    if (autoMode) return;
     if (action === "up") return;
     if (action === "left") Tetris.move(game, -1);
     if (action === "right") Tetris.move(game, 1);
@@ -324,6 +349,7 @@
   }
 
   function beginRepeat(action) {
+    if (autoMode) return;
     if (action === "up") return;
     if (action === "down") {
       heldActions.down = true;
@@ -363,6 +389,91 @@
     Object.keys(repeatTimers).forEach(endRepeat);
   }
 
+  function createAutoPlan() {
+    var best = AutoAI.choose(game);
+    if (!best) {
+      return null;
+    }
+    autoStrategyMode = best.mode || "Build";
+    return {
+      targetX: best.targetX,
+      targetShape: best.targetShape,
+      rotationSteps: best.rotationSteps
+    };
+  }
+
+  function finishAutoPlacement() {
+    if (!autoPlan) return;
+    if (Tetris.setCurrentPlacement(game, autoPlan.targetShape, autoPlan.targetX)) {
+      Tetris.hardDrop(game);
+    }
+    autoPlan = null;
+  }
+
+  function runAutoStep() {
+    if (!autoMode || game.status !== "playing") return;
+    if (!autoPlan) {
+      autoPlan = createAutoPlan();
+    }
+    if (!autoPlan) {
+      Tetris.hardDrop(game);
+      return;
+    }
+
+    if (autoPlan.rotationSteps > 0) {
+      if (Tetris.rotate(game)) {
+        autoPlan.rotationSteps -= 1;
+      } else {
+        finishAutoPlacement();
+      }
+      return;
+    }
+
+    if (game.current.x < autoPlan.targetX) {
+      if (!Tetris.move(game, 1)) finishAutoPlacement();
+      return;
+    }
+    if (game.current.x > autoPlan.targetX) {
+      if (!Tetris.move(game, -1)) finishAutoPlacement();
+      return;
+    }
+
+    Tetris.hardDrop(game);
+    autoPlan = null;
+  }
+
+  function setAutoMode(enabled) {
+    if (autoMode === enabled) return;
+
+    clearAllRepeats();
+    autoPlan = null;
+    autoAccumulator = 0;
+    autoStrategyMode = "Build";
+    if (enabled) {
+      Tetris.setAutoMode(game, true);
+      Tetris.restart(game);
+      autoMode = true;
+    } else {
+      Tetris.setAutoMode(game, true);
+      Tetris.restart(game);
+      Tetris.setAutoMode(game, false);
+      autoMode = false;
+    }
+    render();
+  }
+
+  function updateAutoControlState() {
+    document.querySelectorAll("[data-action]").forEach(function (button) {
+      button.disabled = autoMode;
+    });
+    pauseButton.disabled = autoMode;
+    restartButton.disabled = autoMode;
+    keySettingsButton.disabled = autoMode;
+    autoButton.textContent = autoMode ? "退出自动" : "自动";
+    autoButton.classList.toggle("auto-active", autoMode);
+    autoButton.setAttribute("aria-pressed", autoMode ? "true" : "false");
+  }
+
   function keyboardAction(event) {
     if (isKeyBound("left", event.key)) return "left";
     if (isKeyBound("right", event.key)) return "right";
@@ -379,6 +490,10 @@
   }
 
   function handleKeyDown(event) {
+    if (autoMode) {
+      event.preventDefault();
+      return;
+    }
     if (editingBinding) {
       captureKeyBinding(event);
       return;
@@ -437,6 +552,7 @@
       var action = button.getAttribute("data-action");
       button.addEventListener("pointerdown", function (event) {
         event.preventDefault();
+        if (autoMode) return;
         button.setPointerCapture(event.pointerId);
         if (action !== "up" && game.status === "ready") {
           Tetris.start(game);
@@ -466,7 +582,17 @@
     var delta = time - lastTime;
     lastTime = time;
 
-    if (game.status === "playing") {
+    if (autoMode) {
+      if (game.status === "playing") {
+        autoAccumulator += delta;
+        while (autoAccumulator >= AUTO_ACTION_INTERVAL && game.status === "playing") {
+          runAutoStep();
+          autoAccumulator -= AUTO_ACTION_INTERVAL;
+        }
+      } else {
+        autoAccumulator = 0;
+      }
+    } else if (game.status === "playing") {
       dropAccumulator += delta;
       var interval = heldActions.down ? softDropInterval : dropInterval;
       while (dropAccumulator >= interval && game.status === "playing") {
@@ -486,12 +612,25 @@
   }
 
   overlayButton.addEventListener("click", function () {
+    if (autoMode) {
+      if (game.status === "gameover") {
+        autoPlan = null;
+        autoAccumulator = 0;
+        Tetris.setAutoMode(game, true);
+        Tetris.restart(game);
+        render();
+      } else {
+        setAutoMode(false);
+      }
+      return;
+    }
     Tetris.start(game);
     dropAccumulator = 0;
     render();
   });
 
   pauseButton.addEventListener("click", function () {
+    if (autoMode) return;
     if (game.status === "ready") {
       Tetris.start(game);
     } else {
@@ -502,10 +641,15 @@
   });
 
   restartButton.addEventListener("click", function () {
+    if (autoMode) return;
     Tetris.restart(game);
     clearAllRepeats();
     dropAccumulator = 0;
     render();
+  });
+
+  autoButton.addEventListener("click", function () {
+    setAutoMode(!autoMode);
   });
 
   keySettingsButton.addEventListener("click", openKeySettings);

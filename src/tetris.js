@@ -189,7 +189,8 @@
       bestScore: loadBestScore(),
       status: "ready",
       lastCleared: 0,
-      lastMultiplier: 1
+      lastMultiplier: 1,
+      autoMode: false
     };
 
     game.current = makePiece(drawType(game));
@@ -203,7 +204,8 @@
   }
 
   function restart(game) {
-    var bestScore = Math.max(game.bestScore || 0, game.score || 0);
+    var scoreToKeep = game.autoMode ? 0 : game.score || 0;
+    var bestScore = Math.max(game.bestScore || 0, scoreToKeep);
     if (bestScore !== game.bestScore) {
       saveBestScore(bestScore);
     }
@@ -241,7 +243,14 @@
     }
   }
 
+  function setAutoMode(game, enabled) {
+    game.autoMode = Boolean(enabled);
+  }
+
   function updateBest(game) {
+    if (game.autoMode) {
+      return;
+    }
     if (game.score > game.bestScore) {
       game.bestScore = game.score;
       saveBestScore(game.bestScore);
@@ -331,6 +340,22 @@
     return false;
   }
 
+  function setCurrentPlacement(game, shape, x) {
+    if (game.status !== "playing") {
+      return false;
+    }
+
+    var candidate = Object.assign({}, game.current, {
+      shape: cloneMatrix(shape),
+      x: x
+    });
+    if (collides(game.board, candidate)) {
+      return false;
+    }
+    game.current = candidate;
+    return true;
+  }
+
   function hardDrop(game) {
     if (game.status !== "playing") {
       return 0;
@@ -389,9 +414,11 @@
     start: start,
     pause: pause,
     togglePause: togglePause,
+    setAutoMode: setAutoMode,
     restart: restart,
     move: move,
     rotate: rotate,
+    setCurrentPlacement: setCurrentPlacement,
     tick: tick,
     softDrop: softDrop,
     hardDrop: hardDrop,

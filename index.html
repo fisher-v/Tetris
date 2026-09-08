@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>俄罗斯方块</title>
-    <link rel="stylesheet" href="src/styles.css?v=20260908-key-bindings" />
+    <link rel="stylesheet" href="src/styles.css?v=20260909-mobile-ui-v1" />
   </head>
   <body>
     <main class="game-shell" aria-label="俄罗斯方块游戏">
@@ -45,13 +45,15 @@
                 <span>下一个</span>
                 <canvas id="next" width="112" height="112" aria-label="下一个方块预览"></canvas>
               </div>
-              <div class="desktop-actions">
-                <button id="pauseButton" class="secondary-button" type="button">暂停</button>
-                <button id="restartButton" class="secondary-button" type="button">重新开始</button>
-                <button id="keySettingsButton" class="secondary-button" type="button">自定义按键</button>
-              </div>
               <p id="helpText" class="help-text"></p>
             </aside>
+
+            <div class="desktop-actions" aria-label="游戏操作">
+              <button id="pauseButton" class="secondary-button" type="button">暂停</button>
+              <button id="restartButton" class="secondary-button" type="button">重新开始</button>
+              <button id="keySettingsButton" class="secondary-button" type="button">自定义按键</button>
+              <button id="autoButton" class="secondary-button auto-button" type="button">自动</button>
+            </div>
           </div>
         </div>
 
@@ -98,7 +100,8 @@
       </div>
     </main>
 
-    <script src="src/tetris.js?v=20260908-line-multiplier"></script>
-    <script src="src/app.js?v=20260908-line-multiplier"></script>
+    <script src="src/tetris.js?v=20260909-auto-mode-v2"></script>
+    <script src="src/auto-ai.js?v=20260909-auto-ai-v3"></script>
+    <script src="src/app.js?v=20260909-auto-ai-v3"></script>
   </body>
 </html>
