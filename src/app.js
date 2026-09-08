@@ -304,7 +304,7 @@
     }
     if (autoMode && game.status === "paused") {
       overlayTitle.textContent = "自动游戏已暂停";
-      overlayButton.textContent = "退出自动模式";
+      overlayButton.textContent = "继续自动";
       return;
     }
     if (game.status === "ready") {
@@ -618,6 +618,10 @@
         autoAccumulator = 0;
         Tetris.setAutoMode(game, true);
         Tetris.restart(game);
+        render();
+      } else if (game.status === "paused") {
+        autoAccumulator = 0;
+        Tetris.start(game);
         render();
       } else {
         setAutoMode(false);
