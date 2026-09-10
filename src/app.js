@@ -329,7 +329,9 @@
       (game.status === "gameover" ? "自动结束" : game.status === "paused" ? "自动暂停" :
         "自动 ×3 · " + (autoStrategyMode === "Dig" ? "抢险" : "蓄分")) :
       statusLabel(game.status);
-    pauseButton.textContent = autoMode ? "自动中" : game.status === "paused" ? "继续" : "暂停";
+    pauseButton.textContent = autoMode ?
+      (game.status === "paused" ? "继续自动" : "暂停自动") :
+      game.status === "paused" ? "继续" : "暂停";
     updateAutoControlState();
     updateOverlay();
   }
@@ -466,7 +468,7 @@
     document.querySelectorAll("[data-action]").forEach(function (button) {
       button.disabled = autoMode;
     });
-    pauseButton.disabled = autoMode;
+    pauseButton.disabled = autoMode && game.status === "gameover";
     restartButton.disabled = autoMode;
     keySettingsButton.disabled = autoMode;
     autoButton.textContent = autoMode ? "退出自动" : "自动";
@@ -634,7 +636,17 @@
   });
 
   pauseButton.addEventListener("click", function () {
-    if (autoMode) return;
+    if (autoMode) {
+      if (game.status === "paused") {
+        autoAccumulator = 0;
+        Tetris.start(game);
+      } else if (game.status === "playing") {
+        autoAccumulator = 0;
+        Tetris.pause(game);
+      }
+      render();
+      return;
+    }
     if (game.status === "ready") {
       Tetris.start(game);
     } else {
